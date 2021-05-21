@@ -5,6 +5,8 @@ const isZero = (context, event) => event.key === 0;
 const isNotZero = not(isZero);
 const isMinus = (context, event) => event.operator === '-';
 const isNotMinus = not(isMinus);
+const isNegative = (context) => context.display.indexOf('-') !==-1;
+const isNotNegative = not(isNegative);
 const divideByZero = (context, event) => {
   return (
     (!context.operand2 || context.operand2 === '0.') && context.operator === '/'
@@ -66,11 +68,6 @@ const calMachine = Machine<Context>(
               actions: ['setReadoutNum'],
             },
           ],
-          OPERATOR: {
-            cond: 'isMinus',
-            target: 'negative_number',
-            actions: ['startNegativeNumber'],
-          },
           DECIMAL_POINT: {
             target: 'operand1.after_decimal_point',
             actions: ['defaultReadout'],
@@ -83,6 +80,18 @@ const calMachine = Machine<Context>(
             target: 'operator_entered',
             actions: ['recordOperator'],
           },
+          TOGGLE_SIGN: [
+            {
+              cond: 'isNegative',
+              target: 'operand1',
+              actions: ['toggleSign'],
+            },
+            {
+              cond: 'isNotNegative',
+              target: 'negative_number',
+              actions: ['toggleSign'],
+            },
+          ],
           PERCENTAGE: {
             target: 'result',
             actions: ['storeResultAsOperand2', 'computePercentage'],
@@ -128,21 +137,33 @@ const calMachine = Machine<Context>(
             {
               cond: 'isZero',
               target: 'operand1.zero',
-              actions: ['defaultNegativeReadout'],
+              actions: ['defaultReadout'],
             },
             {
               cond: 'isNotZero',
               target: 'operand1.before_decimal_point',
-              actions: ['setNegativeReadoutNum'],
+              actions: ['setReadoutNum'],
             },
           ],
           DECIMAL_POINT: {
             target: 'operand1.after_decimal_point',
-            actions: ['defaultNegativeReadout'],
+            actions: ['defaultReadout'],
           },
           CLEAR_ENTRY: {
             target: 'start',
             actions: ['defaultReadout'],
+          },
+          TOGGLE_SIGN: {
+            target: 'operand1',
+            actions: ['toggleSign'],
+          },
+          OPERATOR: {
+            target: 'operator_entered',
+            actions: ['recordOperator'],
+          },
+          PERCENTAGE: {
+            target: 'result',
+            actions: ['storeResultAsOperand2', 'computePercentage'],
           },
         },
       },
@@ -150,14 +171,8 @@ const calMachine = Machine<Context>(
         on: {
           OPERATOR: [
             {
-              cond: 'isNotMinus',
               target: 'operator_entered',
               actions: 'setOperator',
-            },
-            {
-              cond: 'isMinus',
-              target: 'negative_number_2',
-              actions: ['startNegativeNumber'],
             },
           ],
           NUMBER: [
@@ -193,6 +208,18 @@ const calMachine = Machine<Context>(
             },
             {
               target: 'alert',
+            },
+          ],
+          TOGGLE_SIGN: [
+            {
+              cond: 'isNegative',
+              target: 'operand2',
+              actions: ['toggleSign'],
+            },
+            {
+              cond: 'isNotNegative',
+              target: 'negative_number_2',
+              actions: ['toggleSign'],
             },
           ],
           EQUALS: [
@@ -242,21 +269,50 @@ const calMachine = Machine<Context>(
       },
       negative_number_2: {
         on: {
+          OPERATOR: [
+            {
+              cond: 'notDivideByZero',
+              target: 'operator_entered',
+              actions: [
+                'storeResultAsOperand2',
+                'compute',
+                'storeResultAsOperand1',
+                'setOperator',
+              ],
+            },
+            {
+              target: 'alert',
+            },
+          ],
+          EQUALS: [
+            {
+              cond: 'notDivideByZero',
+              target: 'result',
+              actions: ['storeResultAsOperand2', 'compute'],
+            },
+            {
+              target: 'alert',
+            },
+          ], 
           NUMBER: [
             {
               cond: 'isZero',
               target: 'operand2.zero',
-              actions: ['defaultNegativeReadout'],
+              actions: ['defaultReadout'],
             },
             {
               cond: 'isNotZero',
               target: 'operand2.before_decimal_point',
-              actions: ['setNegativeReadoutNum'],
+              actions: ['setReadoutNum'],
             },
           ],
+          TOGGLE_SIGN: {
+            target: 'operand2',
+            actions: ['toggleSign'],
+          },
           DECIMAL_POINT: {
             target: 'operand2.after_decimal_point',
-            actions: ['defaultNegativeReadout'],
+            actions: ['defaultReadout'],
           },
           CLEAR_ENTRY: {
             target: 'operator_entered',
@@ -278,6 +334,9 @@ const calMachine = Machine<Context>(
               actions: ['setReadoutNum'],
             },
           ],
+          TOGGLE_SIGN: {
+            actions: ['toggleSign']
+          },
           PERCENTAGE: {
             target: 'result',
             actions: ['storeResultAsOperand2', 'computePercentage'],
@@ -314,6 +373,8 @@ const calMachine = Machine<Context>(
       isZero,
       isNotZero,
       notDivideByZero,
+      isNegative,
+      isNotNegative
     },
     actions: {
       defaultReadout: assign({
@@ -354,7 +415,14 @@ const calMachine = Machine<Context>(
       startNegativeNumber: assign({
         display: () => '-',
       }),
-
+      toggleSign: assign({
+        display: (context) => {
+          if (context.display.indexOf('-') !== -1) {
+            return context.display.replace('-', '');
+          } 
+          return `-${context.display}`
+        } 
+      }),
       recordOperator: assign({
         operand1: context => context.display,
         operator: (context, event) => event.operator,

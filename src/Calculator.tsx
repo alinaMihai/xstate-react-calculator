@@ -120,7 +120,10 @@ const Calculator = () => {
       send('PERCENTAGE', {});
     } else if (item === 'CE') {
       send('CLEAR_ENTRY', {});
-    } else {
+    } else if( item === '+/-') {
+      send('TOGGLE_SIGN', {});
+    } 
+    else {
       send('EQUALS', {});
     }
   };
