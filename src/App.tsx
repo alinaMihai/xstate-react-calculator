@@ -28,7 +28,7 @@ const App = () => {
           fontSize: 18,
         }}
       >
-        Made with react and Xstate 4.x
+        Made with React and Xstate 4.x
       </h3>
       <Calculator />
     </div>
