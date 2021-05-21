@@ -172,7 +172,7 @@ const Calculator = () => {
       </ButtonGrid>
 
       <ExtraData>
-        <p className="mt-1">State</p>
+        <p className="mt-1">State:</p>
         <pre>
           <code>{JSON.stringify(state.value, null, 2)}</code>
         </pre>
