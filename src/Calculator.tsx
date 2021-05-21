@@ -27,7 +27,7 @@ const Button = styled.button`
   background: rgba(0, 0, 0, 0.5);
   cursor: pointer;
   outline: none;
-  border-width: 1px !important;
+  border-width: 7px !important;
   opacity: 0.8;
   transition: opacity 0.2s ease-in-out;
   &:hover {
