@@ -3,9 +3,7 @@ import { Machine, assign } from 'xstate';
 const not = fn => (...args) => !fn(...args);
 const isZero = (context, event) => event.key === 0;
 const isNotZero = not(isZero);
-const isMinus = (context, event) => event.operator === '-';
-const isNotMinus = not(isMinus);
-const isNegative = (context) => context.display.indexOf('-') !==-1;
+const isNegative = (context) => context.display.indexOf('-') !== -1;
 const isNotNegative = not(isNegative);
 const divideByZero = (context, event) => {
   return (
@@ -368,8 +366,6 @@ const calMachine = Machine<Context>(
   },
   {
     guards: {
-      isMinus,
-      isNotMinus,
       isZero,
       isNotZero,
       notDivideByZero,
@@ -385,9 +381,6 @@ const calMachine = Machine<Context>(
         },
       }),
 
-      defaultNegativeReadout: assign({
-        display: () => '-0.',
-      }),
 
       appendNumBeforeDecimal: assign({
         display: (context, event) => {
@@ -406,14 +399,6 @@ const calMachine = Machine<Context>(
         display: (context, event) => {
           return `${event.key}.`;
         },
-      }),
-
-      setNegativeReadoutNum: assign({
-        display: (context, event) => `-${event.key}.`,
-      }),
-
-      startNegativeNumber: assign({
-        display: () => '-',
       }),
       toggleSign: assign({
         display: (context) => {
