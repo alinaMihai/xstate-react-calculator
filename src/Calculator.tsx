@@ -18,7 +18,6 @@ const Input = styled.input`
 const ButtonGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-gap: 15px;
 `;
 
 const Button = styled.button`
@@ -27,9 +26,8 @@ const Button = styled.button`
   color: #eee;
   background: rgba(0, 0, 0, 0.5);
   cursor: pointer;
-  border-radius: 2px;
-  border: 0;
   outline: none;
+  border-width: 5px !important;
   opacity: 0.8;
   transition: opacity 0.2s ease-in-out;
   &:hover {
@@ -40,9 +38,12 @@ const Button = styled.button`
     box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
   }
 
-  &.two-span {
-    grid-column: span 2;
+  &.clear-btn {
     background-color: #3572db;
+  }
+  &.operator {
+    background-color: #2b1b06;
+    border-color: #2b1b06;
   }
 `;
 
@@ -62,6 +63,7 @@ const ExtraData = styled.div`
 const buttons = [
   'C',
   'CE',
+  '+/-',
   '/',
   '7',
   '8',
@@ -77,12 +79,23 @@ const buttons = [
   '+',
   '0',
   '.',
-  '=',
   '%',
+  '=',
 ];
 
 function isOperator(text) {
   return '+-x/'.indexOf(text) > -1;
+}
+
+function addButtonClasses(text) {
+   const classes = [''];
+   if(isOperator(text) || text === '=') {
+     classes.push('operator')
+   } 
+   else if(text === 'C') {
+     classes.push('clear-btn');
+   }
+   return classes.join(' ');
 }
 
 const Calculator = () => {
@@ -107,7 +120,10 @@ const Calculator = () => {
       send('PERCENTAGE', {});
     } else if (item === 'CE') {
       send('CLEAR_ENTRY', {});
-    } else {
+    } else if( item === '+/-') {
+      send('TOGGLE_SIGN', {});
+    } 
+    else {
       send('EQUALS', {});
     }
   };
@@ -145,7 +161,7 @@ const Calculator = () => {
       >
         {buttons.map((btn, index) => (
           <Button
-            className={btn === 'C' ? 'two-span' : ''}
+            className={addButtonClasses(btn)}
             type="button"
             key={index}
             onClick={handleButtonClick(btn)}
