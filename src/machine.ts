@@ -234,6 +234,10 @@ const calMachine = Machine<Context>(
               target: 'alert',
             },
           ],
+          PERCENTAGE: {
+            target: 'operand2',
+            actions: ['storeResultAsOperand2', 'computePercentage'],
+          },
           CLEAR_ENTRY: {
             target: 'operand2.zero',
             actions: ['defaultReadout'],
@@ -319,6 +323,10 @@ const calMachine = Machine<Context>(
           CLEAR_ENTRY: {
             target: 'operator_entered',
             actions: ['defaultReadout'],
+          },
+          PERCENTAGE: {
+            target: 'operand2',
+            actions: ['storeResultAsOperand2', 'computePercentage'],
           },
         },
       },
