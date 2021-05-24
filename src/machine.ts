@@ -57,7 +57,7 @@ const calMachine = Machine<Context>(
           NUMBER: [
             {
               cond: 'isZero',
-              target: 'operand1.zero',
+              target: 'start',
               actions: ['defaultReadout'],
             },
             {
@@ -426,7 +426,7 @@ const calMachine = Machine<Context>(
       }),
 
       setOperator: assign({
-        operator: (context, event) => context.operator,
+        operator: (context, event) => event.operator,
       }),
 
       computePercentage: assign({
