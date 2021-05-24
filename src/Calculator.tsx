@@ -1,7 +1,7 @@
 import React from 'react';
 import { useMachine } from '@xstate/react';
 import styled from 'styled-components';
-
+import useRecordComputationsHistory from './useRecordComputationsHistory';
 import machine from './machine';
 
 const Input = styled.input`
@@ -99,7 +99,10 @@ function addButtonClasses(text) {
 }
 
 const Calculator = () => {
-  const [state, sendMachine] = useMachine(machine, {});
+  const [state, sendMachine, service] = useMachine(machine, {});
+  const history = useRecordComputationsHistory(service);
+
+  
 
   function send(event, payload) {
     console.log('Event - Payload', { event, payload });
@@ -139,6 +142,7 @@ const Calculator = () => {
       }}
     >
       <div>
+        <span>{history} </span>
         <Input
           type="text"
           value={state.context.display}
