@@ -1,10 +1,8 @@
 import { Machine, assign } from 'xstate';
 
 const not = fn => (...args) => !fn(...args);
-const isZero = (context, event) => event.key === 0;
+const isZero = (context, event) =>  event.key === 0;
 const isNotZero = not(isZero);
-const isNegative = (context) => context.display.indexOf('-') !== -1;
-const isNotNegative = not(isNegative);
 const divideByZero = (context, event) => {
   return (
     (!context.operand2 || context.operand2 === '0.') && context.operator === '/'
@@ -27,11 +25,70 @@ function doMath(operand1, operand2, operator) {
   }
 }
 
+export function isOperator(text) {
+  return '+-x/'.indexOf(text) > -1;
+}
+
+function addOperatorToHistory(history, operator) {
+  const removeSpacesHistory = history.trim();
+  const lastInput = removeSpacesHistory.slice(removeSpacesHistory.length-1);
+  if(isOperator(lastInput)) {
+    return removeSpacesHistory.slice(0, removeSpacesHistory.length-1) + " " + operator + " ";
+  } else {
+    return removeSpacesHistory +  " " + operator + " ";
+  }
+}
+
+function removeNumberFromHistory(history) {
+  // The space is important when calculating where the last operator is!
+  if(history.lastIndexOf(' ')!= -1) {
+    // if there was a previous operator, remove number after operator
+    const lastOperatorEnd = history.lastIndexOf(' ');
+    return history.slice(0, lastOperatorEnd+1);
+  }
+  return '';
+}
+
+function replaceNumberInHistory(history, key) {
+  // The space is important when calculating where the last operator is!
+  if(history.lastIndexOf(' ')!=-1) {
+    // if there was a previous operator, replace number after operator with new number
+    const lastOperatorEnd = history.lastIndexOf(' ');
+    return history.slice(0, lastOperatorEnd) + ' ' + key + '.';
+  }
+  return key != undefined ? `${key}.`: '';
+}
+
+function convertNumberToNegativeInHistory(history) {
+  const lastOperatorEnd = history.lastIndexOf(' ');
+  if(lastOperatorEnd !== -1) {
+    return history.slice(0, lastOperatorEnd + 1) + " " +
+    `(-${history.slice(lastOperatorEnd + 1)})`
+  }
+  else {
+    return `(-${history})`;
+  }
+}
+function convertNumberToPositiveInHistory(history) {
+  const lastNegativeNumberStart = history.lastIndexOf("(-");
+  const lastNegativeNumberEnd = history.lastIndexOf(")");
+  return (
+    history.slice(0, lastNegativeNumberStart) +
+    history.slice(lastNegativeNumberStart + 2, lastNegativeNumberEnd)
+  );
+}
+
+function handleSecondOperandDecimalPoint(history) {
+  const temp_history = removeNumberFromHistory(history);
+  return temp_history + '0.';
+}
+
 type Context = {
   display: string;
   operand1?: string;
   operand2?: string;
   operator?: string;
+  historyInput?:string;
 };
 
 const calMachine = Machine<Context>(
@@ -42,6 +99,7 @@ const calMachine = Machine<Context>(
       operand1: undefined,
       operand2: undefined,
       operator: undefined,
+      historyInput: '',
     },
     strict: true,
     initial: 'start',
@@ -58,17 +116,17 @@ const calMachine = Machine<Context>(
             {
               cond: 'isZero',
               target: 'start',
-              actions: ['defaultReadout'],
+              actions: ['defaultReadout', 'defaultReadoutHistory'],
             },
             {
               cond: 'isNotZero',
               target: 'operand1.before_decimal_point',
-              actions: ['setReadoutNum'],
+              actions: ['setReadoutNum', 'replaceLastNumberHistory'],
             },
           ],
           DECIMAL_POINT: {
             target: 'operand1.after_decimal_point',
-            actions: ['defaultReadout'],
+            actions: ['defaultReadout', 'defaultReadoutHistory'],
           },
         },
       },
@@ -78,25 +136,17 @@ const calMachine = Machine<Context>(
             target: 'operator_entered',
             actions: ['recordOperator'],
           },
-          TOGGLE_SIGN: [
-            {
-              cond: 'isNegative',
-              target: 'operand1',
-              actions: ['toggleSign'],
-            },
-            {
-              cond: 'isNotNegative',
+          TOGGLE_SIGN: {
               target: 'negative_number',
-              actions: ['toggleSign'],
-            },
-          ],
+              actions: ['toggleSign', 'convertNumberToNegativeInHistory'],
+          },
           PERCENTAGE: {
             target: 'result',
-            actions: ['storeResultAsOperand2', 'computePercentage'],
+            actions: ['storeResultAsOperand2', 'computePercentage', 'addPercentageToHistory'],
           },
           CLEAR_ENTRY: {
             target: 'operand1',
-            actions: ['defaultReadout'],
+            actions: ['defaultReadout', 'defaultReadoutHistory'],
           },
         },
         initial: 'zero',
@@ -105,7 +155,7 @@ const calMachine = Machine<Context>(
             on: {
               NUMBER: {
                 target: 'before_decimal_point',
-                actions: 'setReadoutNum',
+                actions: ['setReadoutNum', 'replaceLastNumberHistory'],
               },
               DECIMAL_POINT: 'after_decimal_point',
             },
@@ -114,7 +164,7 @@ const calMachine = Machine<Context>(
             on: {
               NUMBER: {
                 target: 'before_decimal_point',
-                actions: ['appendNumBeforeDecimal'],
+                actions: ['appendNumBeforeDecimal', 'addHistoryBeforeDecimalPoint'],
               },
               DECIMAL_POINT: 'after_decimal_point',
             },
@@ -123,7 +173,7 @@ const calMachine = Machine<Context>(
             on: {
               NUMBER: {
                 target: 'after_decimal_point',
-                actions: ['appendNumAfterDecimal'],
+                actions: ['appendNumAfterDecimal', 'addHistoryAfterDecimalPoint'],
               },
             },
           },
@@ -135,25 +185,25 @@ const calMachine = Machine<Context>(
             {
               cond: 'isZero',
               target: 'operand1.zero',
-              actions: ['defaultReadout'],
+              actions: ['defaultReadout', 'replaceLastNumberHistory'],
             },
             {
               cond: 'isNotZero',
               target: 'operand1.before_decimal_point',
-              actions: ['setReadoutNum'],
+              actions: ['setReadoutNum', 'replaceLastNumberHistory'],
             },
           ],
           DECIMAL_POINT: {
             target: 'operand1.after_decimal_point',
-            actions: ['defaultReadout'],
+            actions: ['defaultReadout', 'defaultReadoutHistory'],
           },
           CLEAR_ENTRY: {
             target: 'start',
-            actions: ['defaultReadout'],
+            actions: ['defaultReadout', 'defaultReadoutHistory'],
           },
           TOGGLE_SIGN: {
             target: 'operand1',
-            actions: ['toggleSign'],
+            actions: ['toggleSign', 'convertNumberToPositiveInHistory'],
           },
           OPERATOR: {
             target: 'operator_entered',
@@ -161,7 +211,7 @@ const calMachine = Machine<Context>(
           },
           PERCENTAGE: {
             target: 'result',
-            actions: ['storeResultAsOperand2', 'computePercentage'],
+            actions: ['storeResultAsOperand2', 'computePercentage', 'addPercentageToHistory'],
           },
         },
       },
@@ -176,22 +226,18 @@ const calMachine = Machine<Context>(
           NUMBER: [
             {
               cond: 'isZero',
-              target: 'operand2.zero',
-              actions: ['defaultReadout', 'saveOperand2'],
+              target: 'operator_entered',
+              actions: ['defaultReadout', 'saveOperand2', 'replaceLastNumberHistory'],
             },
             {
               cond: 'isNotZero',
               target: 'operand2.before_decimal_point',
-              actions: ['setReadoutNum', 'saveOperand2'],
+              actions: ['setReadoutNum', 'saveOperand2', 'replaceLastNumberHistory'],
             },
           ],
           DECIMAL_POINT: {
             target: 'operand2.after_decimal_point',
-            actions: ['defaultReadout'],
-          },
-          TOGGLE_SIGN: {
-            target: 'operand1',
-            actions: ['toggleSign']
+            actions: ['defaultReadout', 'zeroSecondOperandAddToHistory'],
           },
         },
       },
@@ -212,23 +258,15 @@ const calMachine = Machine<Context>(
               target: 'alert',
             },
           ],
-          TOGGLE_SIGN: [
-            {
-              cond: 'isNegative',
-              target: 'operand2',
-              actions: ['toggleSign'],
-            },
-            {
-              cond: 'isNotNegative',
+          TOGGLE_SIGN: {
               target: 'negative_number_2',
-              actions: ['toggleSign'],
-            },
-          ],
+              actions: ['toggleSign', 'convertNumberToNegativeInHistory'],
+          },
           EQUALS: [
             {
               cond: 'notDivideByZero',
               target: 'result',
-              actions: ['storeResultAsOperand2', 'compute'],
+              actions: ['storeResultAsOperand2', 'compute', 'clearHistory'],
             },
             {
               target: 'alert',
@@ -236,11 +274,11 @@ const calMachine = Machine<Context>(
           ],
           PERCENTAGE: {
             target: 'operand2',
-            actions: ['storeResultAsOperand2', 'computePercentage'],
+            actions: ['storeResultAsOperand2', 'computePercentage', 'addPercentageToHistory'],
           },
           CLEAR_ENTRY: {
             target: 'operand2.zero',
-            actions: ['defaultReadout'],
+            actions: ['defaultReadout', 'removeLastNumberHistory'],
           },
         },
         initial: 'zero',
@@ -249,7 +287,7 @@ const calMachine = Machine<Context>(
             on: {
               NUMBER: {
                 target: 'before_decimal_point',
-                actions: ['setReadoutNum'],
+                actions: ['setReadoutNum', 'replaceLastNumberHistory'],
               },
               DECIMAL_POINT: 'after_decimal_point',
             },
@@ -258,7 +296,7 @@ const calMachine = Machine<Context>(
             on: {
               NUMBER: {
                 target: 'before_decimal_point',
-                actions: ['appendNumBeforeDecimal'],
+                actions: ['appendNumBeforeDecimal', 'addHistoryBeforeDecimalPoint'],
               },
               DECIMAL_POINT: 'after_decimal_point',
             },
@@ -267,7 +305,7 @@ const calMachine = Machine<Context>(
             on: {
               NUMBER: {
                 target: 'after_decimal_point',
-                actions: 'appendNumAfterDecimal',
+                actions: ['appendNumAfterDecimal', 'addHistoryAfterDecimalPoint'],
               },
             },
           },
@@ -294,7 +332,7 @@ const calMachine = Machine<Context>(
             {
               cond: 'notDivideByZero',
               target: 'result',
-              actions: ['storeResultAsOperand2', 'compute'],
+              actions: ['storeResultAsOperand2', 'compute', 'clearHistory'],
             },
             {
               target: 'alert',
@@ -304,29 +342,29 @@ const calMachine = Machine<Context>(
             {
               cond: 'isZero',
               target: 'operand2.zero',
-              actions: ['defaultReadout'],
+              actions: ['defaultReadout', 'replaceLastNumberHistory'],
             },
             {
               cond: 'isNotZero',
               target: 'operand2.before_decimal_point',
-              actions: ['setReadoutNum'],
+              actions: ['setReadoutNum', 'replaceLastNumberHistory'],
             },
           ],
           TOGGLE_SIGN: {
             target: 'operand2',
-            actions: ['toggleSign'],
+            actions: ['toggleSign', 'convertNumberToPositiveInHistory'],
           },
           DECIMAL_POINT: {
             target: 'operand2.after_decimal_point',
-            actions: ['defaultReadout'],
+            actions: ['defaultReadout', 'handleSecondOperandDecimalPoint'],
           },
           CLEAR_ENTRY: {
             target: 'operator_entered',
-            actions: ['defaultReadout'],
+            actions: ['defaultReadout', 'removeLastNumberHistory'],
           },
           PERCENTAGE: {
             target: 'operand2',
-            actions: ['storeResultAsOperand2', 'computePercentage'],
+            actions: ['storeResultAsOperand2', 'computePercentage', 'addPercentageToHistory'],
           },
         },
       },
@@ -336,12 +374,12 @@ const calMachine = Machine<Context>(
             {
               cond: 'isZero',
               target: 'operand1',
-              actions: ['defaultReadout'],
+              actions: ['defaultReadout', 'replaceLastNumberHistory'],
             },
             {
               cond: 'isNotZero',
               target: 'operand1.before_decimal_point',
-              actions: ['setReadoutNum'],
+              actions: ['setReadoutNum', 'replaceLastNumberHistory'],
             },
           ],
           TOGGLE_SIGN: {
@@ -349,7 +387,7 @@ const calMachine = Machine<Context>(
           },
           PERCENTAGE: {
             target: 'result',
-            actions: ['storeResultAsOperand2', 'computePercentage'],
+            actions: ['storeResultAsOperand2', 'computePercentage', 'addPercentageToHistory'],
           },
           OPERATOR: {
             target: 'operator_entered',
@@ -357,7 +395,7 @@ const calMachine = Machine<Context>(
           },
           CLEAR_ENTRY: {
             target: 'start',
-            actions: ['defaultReadout'],
+            actions: ['defaultReadout', 'defaultReadoutHistory'],
           },
         },
       },
@@ -381,8 +419,6 @@ const calMachine = Machine<Context>(
       isZero,
       isNotZero,
       notDivideByZero,
-      isNegative,
-      isNotNegative
     },
     actions: {
       defaultReadout: assign({
@@ -392,8 +428,6 @@ const calMachine = Machine<Context>(
           return '0.';
         },
       }),
-
-
       appendNumBeforeDecimal: assign({
         display: (context, event) => {
           // from '123.' => '1234.'
@@ -410,7 +444,7 @@ const calMachine = Machine<Context>(
       setReadoutNum: assign({
         display: (context, event) => {
           return `${event.key}.`;
-        },
+        }
       }),
       toggleSign: assign({
         display: (context) => {
@@ -423,10 +457,16 @@ const calMachine = Machine<Context>(
       recordOperator: assign({
         operand1: context => context.display,
         operator: (context, event) => event.operator,
+        historyInput: (context, event) => {
+         return addOperatorToHistory(context.historyInput, event.operator);
+        },
       }),
 
       setOperator: assign({
         operator: (context, event) => event.operator,
+        historyInput: (context, event) => {
+          return addOperatorToHistory(context.historyInput, event.operator);
+        },
       }),
 
       computePercentage: assign({
@@ -460,12 +500,65 @@ const calMachine = Machine<Context>(
       saveOperand2: assign({
         operand2: (context, event) => context.display,
       }),
-
+      clearHistory: assign({
+        historyInput: (context) => context.display
+      }),
+      addPercentageToHistory: assign({
+        historyInput: context => context.historyInput + '%'
+      }),
       reset: assign({
-        display: () => '0.',
+        display: (context, event) => '0.',
         operand1: (context, event) => undefined,
-        operand2: () => undefined,
-        operator: () => undefined,
+        operand2: (context, event) => undefined,
+        operator: (context, event) => undefined,
+        historyInput: (context, event) => ''
+      }),
+      replaceLastNumberHistory: assign({
+        historyInput: (context, event) => {
+          return replaceNumberInHistory(context.historyInput, event.key)
+        }
+      }),
+      removeLastNumberHistory: assign({
+        historyInput: (context) => {
+          return removeNumberFromHistory(context.historyInput)
+        }
+      }),
+      convertNumberToNegativeInHistory: assign({
+        historyInput: (context) => {
+          return convertNumberToNegativeInHistory(context.historyInput)
+        }
+      }),
+      convertNumberToPositiveInHistory: assign({
+        historyInput: (context) => {
+          return convertNumberToPositiveInHistory(context.historyInput)
+        }
+      }),
+      handleSecondOperandDecimalPoint: assign({
+        historyInput: (context) => {
+          return handleSecondOperandDecimalPoint(context.historyInput)
+        }
+      }),
+      defaultReadoutHistory: assign({
+        historyInput: (context) =>  '0.'
+      }),
+      zeroSecondOperandAddToHistory: assign({
+        historyInput: (context) => {
+          // add it only once
+          if(context.historyInput!.lastIndexOf('0.') !== context.historyInput!.length - 2) {
+            return context.historyInput + `0.`;
+          } else {
+            return context.historyInput;
+          }
+        }
+      }),
+      addHistoryAfterDecimalPoint: assign({
+        historyInput: (context, event) => {
+          return `${context.historyInput}${event.key}`}
+      }),
+      addHistoryBeforeDecimalPoint: assign({
+        historyInput: (context, event) => {
+          return `${context.historyInput!.slice(0, -1)}${event.key}.`
+        }
       }),
     },
   },

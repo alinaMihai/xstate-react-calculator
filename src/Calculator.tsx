@@ -1,8 +1,7 @@
 import React from 'react';
 import { useMachine } from '@xstate/react';
 import styled from 'styled-components';
-import useRecordComputationsHistory from './useRecordComputationsHistory';
-import machine from './machine';
+import machine, { isOperator } from './machine';
 
 const Input = styled.input`
   font-size: 32px;
@@ -83,10 +82,6 @@ const buttons = [
   '=',
 ];
 
-function isOperator(text) {
-  return '+-x/'.indexOf(text) > -1;
-}
-
 function addButtonClasses(text) {
    const classes = [''];
    if(isOperator(text) || text === '=') {
@@ -100,10 +95,7 @@ function addButtonClasses(text) {
 
 const Calculator = () => {
   const [state, sendMachine, service] = useMachine(machine, {});
-  const history = useRecordComputationsHistory(service);
-
   
-
   function send(event, payload) {
     console.log('Event - Payload', { event, payload });
 
@@ -142,7 +134,7 @@ const Calculator = () => {
       }}
     >
       <div>
-        <span>{history} </span>
+        <div>{state.context.historyInput} </div>
         <Input
           type="text"
           value={state.context.display}
