@@ -255,10 +255,6 @@ const calMachine = Machine<Context>(
             target: 'operand2.after_decimal_point',
             actions: ['defaultReadout', 'zeroSecondOperandAddToHistory'],
           },
-          TOGGLE_SIGN: {
-            target: 'operand1',
-            actions: ['toggleSign']
-          },
         },
       },
       operand2: {

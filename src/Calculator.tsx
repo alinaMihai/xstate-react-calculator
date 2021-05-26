@@ -93,17 +93,6 @@ function addButtonClasses(text) {
    return classes.join(' ');
 }
 
-function addButtonClasses(text) {
-   const classes = [''];
-   if(isOperator(text) || text === '=') {
-     classes.push('operator')
-   } 
-   else if(text === 'C') {
-     classes.push('clear-btn');
-   }
-   return classes.join(' ');
-}
-
 const Calculator = () => {
   const [state, sendMachine] = useMachine(machine, {});
   
