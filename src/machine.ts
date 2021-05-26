@@ -461,11 +461,10 @@ const calMachine = Machine<Context>(
     },
     actions: {
       defaultReadout: assign({
-        display: () => {
-          console.log('defaultReadout');
-
-          return '0.';
-        },
+        display: () => '0.'
+      }),
+      defaultReadoutHistory: assign({
+        historyInput: (_) =>  '0.'
       }),
       appendNumBeforeDecimal: assign({
         display: (context, event) => {
@@ -473,17 +472,17 @@ const calMachine = Machine<Context>(
           return `${context.display.slice(0, -1)}${event.key}.`;
         },
       }),
-
       appendNumAfterDecimal: assign({
-        display: (context, event) => {
-          return `${context.display}${event.key}`;
-        },
+        display: (context, event) =>  `${context.display}${event.key}`
       }),
-
+      addHistoryAfterDecimalPoint: assign({
+        historyInput: (context, event) =>  `${context.historyInput}${event.key}`
+      }),
+      addHistoryBeforeDecimalPoint: assign({
+        historyInput: (context, event) =>  `${context.historyInput!.slice(0, -1)}${event.key}.`
+      }),
       setReadoutNum: assign({
-        display: (_, event) => {
-          return `${event.key}.`;
-        }
+        display: (_, event) => `${event.key}.`
       }),
       toggleSign: assign({
         display: (context) => {
@@ -496,22 +495,18 @@ const calMachine = Machine<Context>(
       recordOperator: assign({
         operand1: context => context.display,
         operator: (_, event) => event.operator,
-        historyInput: (context, event) => {
-         return addOperatorToHistory(context.historyInput, event.operator);
-        },
+        historyInput: (context, event) =>  addOperatorToHistory(context.historyInput, event.operator)
       }),
-
       setOperator: assign({
         operator: (_, event) => event.operator,
-        historyInput: (context, event) => {
-          return addOperatorToHistory(context.historyInput, event.operator);
-        },
+        historyInput: (context, event) =>  addOperatorToHistory(context.historyInput, event.operator)
       }),
-
       computePercentage: assign({
         display: (context, _) => (+context.display / 100).toString(),
       }),
-
+      addPercentageToHistory: assign({
+        historyInput: context => context.historyInput + '%'
+      }),
       compute: assign({
         display: (context, _) => {
           const result = doMath(
@@ -527,23 +522,17 @@ const calMachine = Machine<Context>(
           return result.toString().indexOf('.') === -1 ? `${result.toString()}.` : result.toString();
         },
       }),
-
-      storeResultAsOperand1: assign({
-        operand1: context => context.display,
-      }),
-
-      storeResultAsOperand2: assign({
-        operand2: context => context.display,
-      }),
-
-      saveOperand2: assign({
-        operand2: (context, _) => context.display,
-      }),
       resultHistory: assign({
         historyInput: (context) => +context.display >= 0 ? context.display : `(${context.display})`
       }),
-      addPercentageToHistory: assign({
-        historyInput: context => context.historyInput + '%'
+      storeResultAsOperand1: assign({
+        operand1: context => context.display,
+      }),
+      storeResultAsOperand2: assign({
+        operand2: context => context.display,
+      }),
+      saveOperand2: assign({
+        operand2: (context, _) => context.display,
       }),
       reset: assign({
         display: (_) => '0.',
@@ -553,32 +542,19 @@ const calMachine = Machine<Context>(
         historyInput: (_) => ''
       }),
       replaceLastNumberHistory: assign({
-        historyInput: (context, event) => {
-          return replaceNumberInHistory(context.historyInput, event.key)
-        }
+        historyInput: (context, event) => replaceNumberInHistory(context.historyInput, event.key)
       }),
       removeLastNumberHistory: assign({
-        historyInput: (context) => {
-          return removeNumberFromHistory(context.historyInput)
-        }
+        historyInput: (context) => removeNumberFromHistory(context.historyInput)
       }),
       convertNumberToNegativeInHistory: assign({
-        historyInput: (context) => {
-          return convertNumberToNegativeInHistory(context.historyInput)
-        }
+        historyInput: (context) => convertNumberToNegativeInHistory(context.historyInput)
       }),
       convertNumberToPositiveInHistory: assign({
-        historyInput: (context) => {
-          return convertNumberToPositiveInHistory(context.historyInput)
-        }
+        historyInput: (context) => convertNumberToPositiveInHistory(context.historyInput)
       }),
       handleSecondOperandDecimalPoint: assign({
-        historyInput: (context) => {
-          return handleSecondOperandDecimalPoint(context.historyInput)
-        }
-      }),
-      defaultReadoutHistory: assign({
-        historyInput: (_) =>  '0.'
+        historyInput: (context) => handleSecondOperandDecimalPoint(context.historyInput)
       }),
       zeroSecondOperandAddToHistory: assign({
         historyInput: (context) => {
@@ -588,15 +564,6 @@ const calMachine = Machine<Context>(
           } else {
             return context.historyInput;
           }
-        }
-      }),
-      addHistoryAfterDecimalPoint: assign({
-        historyInput: (context, event) => {
-          return `${context.historyInput}${event.key}`}
-      }),
-      addHistoryBeforeDecimalPoint: assign({
-        historyInput: (context, event) => {
-          return `${context.historyInput!.slice(0, -1)}${event.key}.`
         }
       }),
     },
