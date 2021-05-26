@@ -218,7 +218,6 @@ const calMachine = Machine<Context>(
             actions: ['defaultReadout', 'defaultReadoutHistory'],
           },
           TOGGLE_SIGN: {
-            cond: 'isNotZero',
             target: 'operand1',
             actions: ['toggleSign', 'convertNumberToPositiveInHistory'],
           },
@@ -375,7 +374,6 @@ const calMachine = Machine<Context>(
             },
           ],
           TOGGLE_SIGN: {
-            cond: 'isNotZero',
             target: 'operand2',
             actions: ['toggleSign', 'convertNumberToPositiveInHistory'],
           },
@@ -459,7 +457,6 @@ const calMachine = Machine<Context>(
       notDivideByZero,
       isNegative,
       isNotNegative,
-      isDisplayZero,
       isNotDisplayZero
     },
     actions: {
