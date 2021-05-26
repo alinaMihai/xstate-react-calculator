@@ -94,7 +94,7 @@ function addButtonClasses(text) {
 }
 
 const Calculator = () => {
-  const [state, sendMachine, service] = useMachine(machine, {});
+  const [state, sendMachine] = useMachine(machine, {});
   
   function send(event, payload) {
     console.log('Event - Payload', { event, payload });
