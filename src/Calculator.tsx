@@ -1,11 +1,10 @@
 import React from 'react';
 import { useMachine } from '@xstate/react';
 import styled from 'styled-components';
+import machine, { isOperator } from './machine';
 
-import machine from './machine';
-
-const Input = styled.input`
-  font-size: 32px;
+const Input = styled.textarea`
+  font-size: 22px;
   color: #333;
   text-align: right;
   padding: 5px 13px;
@@ -83,10 +82,6 @@ const buttons = [
   '=',
 ];
 
-function isOperator(text) {
-  return '+-x/'.indexOf(text) > -1;
-}
-
 function addButtonClasses(text) {
    const classes = [''];
    if(isOperator(text) || text === '=') {
@@ -100,7 +95,7 @@ function addButtonClasses(text) {
 
 const Calculator = () => {
   const [state, sendMachine] = useMachine(machine, {});
-
+  
   function send(event, payload) {
     console.log('Event - Payload', { event, payload });
 
@@ -140,8 +135,9 @@ const Calculator = () => {
     >
       <div>
         <Input
-          type="text"
-          value={state.context.display}
+          rows={3}
+          cols={3}
+          value={state.context.historyInput}
           disabled
           style={{
             width: '100%',
