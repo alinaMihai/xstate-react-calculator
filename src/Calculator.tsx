@@ -3,8 +3,8 @@ import { useMachine } from '@xstate/react';
 import styled from 'styled-components';
 import machine, { isOperator } from './machine';
 
-const Input = styled.input`
-  font-size: 32px;
+const Input = styled.textarea`
+  font-size: 22px;
   color: #333;
   text-align: right;
   padding: 5px 13px;
@@ -134,10 +134,10 @@ const Calculator = () => {
       }}
     >
       <div>
-        <div>{state.context.historyInput} </div>
         <Input
-          type="text"
-          value={state.context.display}
+          rows={3}
+          cols={3}
+          value={state.context.historyInput}
           disabled
           style={{
             width: '100%',

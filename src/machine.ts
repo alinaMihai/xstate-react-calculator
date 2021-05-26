@@ -110,7 +110,7 @@ const calMachine = Machine<Context>(
       operand1: undefined,
       operand2: undefined,
       operator: undefined,
-      historyInput: '',
+      historyInput: '0.'
     },
     strict: true,
     initial: 'start',
@@ -539,7 +539,7 @@ const calMachine = Machine<Context>(
         operand1: (_) => undefined,
         operand2: (_) => undefined,
         operator: (_) => undefined,
-        historyInput: (_) => ''
+        historyInput: (_) => '0.',
       }),
       replaceLastNumberHistory: assign({
         historyInput: (context, event) => replaceNumberInHistory(context.historyInput, event.key)
