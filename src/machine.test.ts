@@ -1,4 +1,4 @@
-import { interpret } from 'xstate';
+import { interpret } from "xstate";
 import calMachine, {
   addOperatorToHistory,
   isOperator,
@@ -144,9 +144,9 @@ describe("handleSecondOperandDecimalPoint", () => {
   });
 });
 
-describe("calculator Machine", () => {
-   const machine = interpret(calMachine); 
-   machine.start(); 
+describe("calculator Machine scenario 1: adding two numbers with decimals", () => {
+  const machine = interpret(calMachine);
+  machine.start();
   test("given starting state, when entering 0, it should add 0. in history", () => {
     const result = machine.send({ type: "NUMBER", key: 0 });
     expect(result.context.historyInput).toEqual("0.");
@@ -156,25 +156,71 @@ describe("calculator Machine", () => {
     expect(result.context.historyInput).toEqual("10.");
   });
   test("given operand1.after_decimal_point, when entering a new number, it should add it in history after the decimal point", () => {
-    machine.send({type: "DECIMAL_POINT"});
-    const result =  machine.send({ type: "NUMBER", key: 1 });
+    machine.send({ type: "DECIMAL_POINT" });
+    const result = machine.send({ type: "NUMBER", key: 1 });
     expect(result.context.historyInput).toEqual("10.1");
   });
   test("given number 10.1, when entering operator +, it should add it in history", () => {
-    const result = machine.send({type: 'OPERATOR', operator: '+'});
+    const result = machine.send({ type: "OPERATOR", operator: "+" });
     expect(result.context.historyInput).toEqual("10.1 + ");
   });
   test("given operation 10.1 +, when entering a new number it should add it in history", () => {
-    const result = machine.send({type: 'NUMBER', key: '21'});
+    const result = machine.send({ type: "NUMBER", key: "21" });
     expect(result.context.historyInput).toEqual("10.1 + 21.");
   });
   test("given operation 10.1 + 21, when entering a new number after decimal point it should add it in history", () => {
-    machine.send({type: 'DECIMAL_POINT'});
-    const result = machine.send({type: 'NUMBER', key: '1'});
+    machine.send({ type: "DECIMAL_POINT" });
+    const result = machine.send({ type: "NUMBER", key: "1" });
     expect(result.context.historyInput).toEqual("10.1 + 21.1");
   });
   test("given operation 10.1 + 21.1, when entering equals, it should show the result in history", () => {
-    const result = machine.send({type: 'EQUALS'});
+    const result = machine.send({ type: "EQUALS" });
     expect(result.context.historyInput).toContain("31.2");
   });
+});
+
+describe("calculator Machine scenario 2: adding two percentages together", () => {
+  const machine = interpret(calMachine);
+  machine.start();
+  test("given starting state, when entering 100, it should add 100. in history", () => {
+    const result = machine.send({ type: "NUMBER", key: 100 });
+    expect(result.context.historyInput).toEqual("100.");
+  });
+  test("given number 100, when entering percentage %, it should compute the percentage and add it in history", () => {
+    const result = machine.send({ type: "PERCENTAGE" });
+    expect(result.context.historyInput).toEqual("100.%");
+    expect(result.context.display).toEqual("1");
+  });
+  test("given number 1, when entering operator +, it should add it in history", () => {
+    const result = machine.send({ type: "OPERATOR", operator: "+" });
+    expect(result.context.historyInput).toEqual("100.% + ");
+  });
+  test("given operation 100.% +, when entering 100, it should add 100. in history", () => {
+    const result = machine.send({ type: "NUMBER", key: 100 });
+    expect(result.context.historyInput).toEqual("100.% + 100.");
+  });
+  test("given operation 100.% + 100., when entering percentage %, it should add it in history", () => {
+    const result = machine.send({ type: "PERCENTAGE" });
+    expect(result.context.historyInput).toEqual("100.% + 100.%");
+  });
+  test("given operation 100.% + 100.%, when entering equals it should compute the result", () => {
+    const result = machine.send({ type: "EQUALS" });
+    expect(result.context.historyInput).toEqual("2.");
+    expect(result.context.display).toEqual("2.");
+  });
+});
+
+describe("calculator Machine scenario 3: operation with multiple operators 1 - 1 + 2 / 2", () => {
+  const machine = interpret(calMachine);
+  machine.start();
+  machine.send({ type: "NUMBER", key: 1 });
+  machine.send({ type: "OPERATOR", operator: "-" });
+  machine.send({ type: "NUMBER", key: 1 });
+  machine.send({ type: "OPERATOR", operator: "+" });
+  machine.send({ type: "NUMBER", key: 2 });
+  machine.send({ type: "OPERATOR", operator: "/" });
+  machine.send({ type: "NUMBER", key: 2 });
+  const result = machine.send({ type: "EQUALS" });
+  expect(result.context.historyInput).toEqual("1.");
+  expect(result.context.display).toEqual("1.");
 });
