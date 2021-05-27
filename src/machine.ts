@@ -33,6 +33,10 @@ export function isOperator(text) {
   return '+-x/'.indexOf(text) > -1;
 }
 
+function addDecimalPoint(aNumber) {
+  return aNumber.toString().indexOf('.') === -1 ? `${aNumber.toString()}.` : aNumber.toString();
+}
+
 export function addOperatorToHistory(history, operator) {
   const removeSpacesHistory = history.trim(); //history is trimmed so the last character can be an operator instead of space
   const lastInput = removeSpacesHistory.slice(removeSpacesHistory.length-1);
@@ -92,6 +96,17 @@ export function convertNumberToPositiveInHistory(history) {
 export function handleSecondOperandDecimalPoint(history) {
   const temp_history = removeNumberFromHistory(history);
   return temp_history + '0.';
+}
+
+export function computePercentage(context) {
+  const operationNumbers = context.historyInput!.replace('(','').replace(')', '')!.split((/\s\+\s|\s-\s|\sx\s|\s\/\s/));
+  const hasOperator = operationNumbers.length > 1;
+  let percentage = +context.display/100; 
+  if(hasOperator) {
+     const total = +context.operand1;
+     percentage = total + ((+context.display/100) * total);
+  }
+  return percentage.toString();
 }
 
 type Context = {
@@ -290,7 +305,7 @@ const calMachine = Machine<Context>(
             },
           ],
           PERCENTAGE: {
-            target: 'operand2',
+            target: 'result',
             actions: ['storeResultAsOperand2', 'computePercentage', 'addPercentageToHistory'],
           },
           CLEAR_ENTRY: {
@@ -386,7 +401,7 @@ const calMachine = Machine<Context>(
             actions: ['defaultReadout', 'removeLastNumberHistory'],
           },
           PERCENTAGE: {
-            target: 'operand2',
+            target: 'result',
             actions: ['storeResultAsOperand2', 'computePercentage', 'addPercentageToHistory'],
           },
         },
@@ -502,10 +517,15 @@ const calMachine = Machine<Context>(
         historyInput: (context, event) =>  addOperatorToHistory(context.historyInput, event.operator)
       }),
       computePercentage: assign({
-        display: (context, _) => (+context.display / 100).toString(),
+        display: (context, _) => {
+         return computePercentage(context);
+        }
       }),
       addPercentageToHistory: assign({
-        historyInput: context => context.historyInput + '%'
+        historyInput: (context) => {
+          const percentageValue = +context.display > 0 ? `${context.display}` : `(${context.display})`;
+          return percentageValue;
+        }
       }),
       compute: assign({
         display: (context, _) => {
@@ -519,7 +539,7 @@ const calMachine = Machine<Context>(
             `doing calculation ${context.operand1} ${context.operator} ${context.operand2} = ${result}`,
           );
 
-          return result.toString().indexOf('.') === -1 ? `${result.toString()}.` : result.toString();
+          return addDecimalPoint(result);
         },
       }),
       resultHistory: assign({

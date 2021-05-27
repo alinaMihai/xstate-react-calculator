@@ -188,25 +188,20 @@ describe("calculator Machine scenario 2: adding two percentages together", () =>
   });
   test("given number 100, when entering percentage %, it should compute the percentage and add it in history", () => {
     const result = machine.send({ type: "PERCENTAGE" });
-    expect(result.context.historyInput).toEqual("100.%");
+    expect(result.context.historyInput).toEqual("1");
     expect(result.context.display).toEqual("1");
   });
   test("given number 1, when entering operator +, it should add it in history", () => {
     const result = machine.send({ type: "OPERATOR", operator: "+" });
-    expect(result.context.historyInput).toEqual("100.% + ");
+    expect(result.context.historyInput).toEqual("1 + ");
   });
-  test("given operation 100.% +, when entering 100, it should add 100. in history", () => {
+  test("given operation 1 +, when entering 100, it should add 100. in history", () => {
     const result = machine.send({ type: "NUMBER", key: 100 });
-    expect(result.context.historyInput).toEqual("100.% + 100.");
+    expect(result.context.historyInput).toEqual("1 + 100.");
   });
-  test("given operation 100.% + 100., when entering percentage %, it should add it in history", () => {
+  test("given operation 1 + 100., when entering percentage %, it should compute the percentage correctly", () => {
     const result = machine.send({ type: "PERCENTAGE" });
-    expect(result.context.historyInput).toEqual("100.% + 100.%");
-  });
-  test("given operation 100.% + 100.%, when entering equals it should compute the result", () => {
-    const result = machine.send({ type: "EQUALS" });
-    expect(result.context.historyInput).toEqual("2.");
-    expect(result.context.display).toEqual("2.");
+    expect(result.context.historyInput).toEqual("2");
   });
 });
 
