@@ -2,6 +2,7 @@ import React from 'react';
 import { useMachine } from '@xstate/react';
 import styled from 'styled-components';
 import machine, { isOperator } from './machine';
+import { CalEvent } from './machine.types';
 
 const Input = styled.textarea`
   font-size: 22px;
@@ -96,30 +97,30 @@ function addButtonClasses(text) {
 const Calculator = () => {
   const [state, sendMachine] = useMachine(machine, {devTools: true});
   
-  function send(event, payload) {
-    console.log('Event - Payload', { event, payload });
+  function send(event: CalEvent) {
+    console.log(event);
 
-    sendMachine(event, payload);
+    sendMachine(event);
   }
 
-  const handleButtonClick = item => () => {
+  const handleButtonClick = (item:string) => () => {
     if (Number.isInteger(+item)) {
-      send('NUMBER', { key: +item });
+      send({ type: 'NUMBER', key: +item });
     } else if (isOperator(item)) {
-      send('OPERATOR', { operator: item });
+      send({type: 'OPERATOR', operator: item });
     } else if (item === 'C') {
-      send('CLEAR_EVERYTHING', {});
+      send({ type:'CLEAR_EVERYTHING' });
     } else if (item === '.') {
-      send('DECIMAL_POINT', {});
+      send({ type:'DECIMAL_POINT' });
     } else if (item === '%') {
-      send('PERCENTAGE', {});
+      send({ type:'PERCENTAGE' });
     } else if (item === 'CE') {
-      send('CLEAR_ENTRY', {});
+      send({ type:'CLEAR_ENTRY' });
     } else if( item === '+/-') {
-      send('TOGGLE_SIGN', {});
+      send({ type:'TOGGLE_SIGN' });
     } 
     else {
-      send('EQUALS', {});
+      send({ type:'EQUALS' });
     }
   };
 

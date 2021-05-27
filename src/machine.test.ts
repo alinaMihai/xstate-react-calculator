@@ -165,12 +165,12 @@ describe("calculator Machine scenario 1: adding two numbers with decimals", () =
     expect(result.context.historyInput).toEqual("10.1 + ");
   });
   test("given operation 10.1 +, when entering a new number it should add it in history", () => {
-    const result = machine.send({ type: "NUMBER", key: "21" });
+    const result = machine.send({ type: "NUMBER", key: 21 });
     expect(result.context.historyInput).toEqual("10.1 + 21.");
   });
   test("given operation 10.1 + 21, when entering a new number after decimal point it should add it in history", () => {
     machine.send({ type: "DECIMAL_POINT" });
-    const result = machine.send({ type: "NUMBER", key: "1" });
+    const result = machine.send({ type: "NUMBER", key: 1 });
     expect(result.context.historyInput).toEqual("10.1 + 21.1");
   });
   test("given operation 10.1 + 21.1, when entering equals, it should show the result in history", () => {

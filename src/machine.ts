@@ -1,5 +1,5 @@
 import { Machine, assign } from 'xstate';
-
+import { Context, CalStateSchema, CalEvent } from './machine.types';
 const not = fn => (...args) => !fn(...args);
 const isZero = (_, event) =>  event.key === 0;
 const isNotZero = not(isZero);
@@ -8,8 +8,9 @@ const isNotNegative = (context) => not(isNegative)(context) && not(isDisplayZero
 const isDisplayZero = (context) => context.display === '0.';
 const isNotDisplayZero = not(isDisplayZero);
 const divideByZero = (context, _) => {
+  // it has to be display because the cond is executed before the display is saved as operand2 in the transition actions
   return (
-    (!context.operand2 || context.operand2 === '0.') && context.operator === '/'
+    (!context.display || context.display === '0.') && context.operator === '/'
   );
 };
 const notDivideByZero = not(divideByZero);
@@ -109,15 +110,8 @@ export function computePercentage(context) {
   return percentage.toString();
 }
 
-type Context = {
-  display: string;
-  operand1?: string;
-  operand2?: string;
-  operator?: string;
-  historyInput?:string;
-};
 
-const calMachine = Machine<Context>(
+const calMachine = Machine<Context, CalStateSchema, CalEvent>(
   {
     id: 'calcMachine',
     context: {
