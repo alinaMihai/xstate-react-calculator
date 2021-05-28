@@ -1,5 +1,5 @@
 import { Machine, assign } from 'xstate';
-import {S} from './machine.constants';
+import { S, E } from './machine.constants';
 import { Context, CalStateSchema, CalEvent } from './machine.types';
 const not = fn => (...args) => !fn(...args);
 const isZero = (_, event) =>  event.key === 0;
@@ -125,7 +125,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
     strict: true,
     initial: S.start,
     on: {
-      CLEAR_EVERYTHING: {
+      [E.CLEAR_EVERYTHING]: {
         target: `.${S.start}`,
         actions: ['reset'],
       },
@@ -133,7 +133,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
     states: {
       [S.start]: {
         on: {
-          NUMBER: [
+          [E.NUMBER]: [
             {
               cond: 'isZero',
               target: `${S.operand1}.${S.zero}`,
@@ -145,7 +145,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
               actions: ['setReadoutNum', 'replaceLastNumberHistory'],
             },
           ],
-          DECIMAL_POINT: {
+          [E.DECIMAL_POINT]: {
             target: `${S.operand1}.${S.after_decimal_point}`,
             actions: ['defaultReadout', 'defaultReadoutHistory'],
           },
@@ -153,20 +153,20 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
       },
       [S.operand1]: {
         on: {
-          OPERATOR: {
+          [E.OPERATOR]: {
             target: S.operator_entered,
             actions: ['recordOperator'],
           },
-          TOGGLE_SIGN: {
+          [E.TOGGLE_SIGN]: {
               cond: 'isNotDisplayZero',
               target: S.negative_number,
               actions: ['toggleSign', 'convertNumberToNegativeInHistory'],
           },
-          PERCENTAGE: {
+          [E.PERCENTAGE]: {
             target: S.result,
             actions: ['storeResultAsOperand2', 'computePercentage', 'addPercentageToHistory'],
           },
-          CLEAR_ENTRY: {
+          [E.CLEAR_ENTRY]: {
             target: S.operand1,
             actions: ['defaultReadout', 'defaultReadoutHistory'],
           },
@@ -175,7 +175,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
         states: {
           [S.zero]: {
             on: {
-              NUMBER: [{
+              [E.NUMBER]: [{
                 cond: 'isZero',
                 target: S.zero,
                 actions: ['setReadoutNum', 'replaceLastNumberHistory'],
@@ -183,21 +183,21 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
                 target: S.before_decimal_point,
                 actions: ['setReadoutNum', 'replaceLastNumberHistory'],
               }],
-              DECIMAL_POINT: S.after_decimal_point,
+              [E.DECIMAL_POINT]: S.after_decimal_point,
             },
           },
           [S.before_decimal_point]: {
             on: {
-              NUMBER: {
+              [E.NUMBER]: {
                 target: S.before_decimal_point,
                 actions: ['appendNumBeforeDecimal', 'addHistoryBeforeDecimalPoint'],
               },
-              DECIMAL_POINT: S.after_decimal_point,
+              [E.DECIMAL_POINT]: S.after_decimal_point,
             },
           },
           [S.after_decimal_point]: {
             on: {
-              NUMBER: {
+              [E.NUMBER]: {
                 target: S.after_decimal_point,
                 actions: ['appendNumAfterDecimal', 'addHistoryAfterDecimalPoint'],
               },
@@ -207,7 +207,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
       },
       [S.negative_number]: {
         on: {
-          NUMBER: [
+          [E.NUMBER]: [
             {
               cond: 'isZero',
               target: `${S.operand1}.${S.zero}`,
@@ -219,23 +219,23 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
               actions: ['setReadoutNum', 'replaceLastNumberHistory'],
             },
           ],
-          DECIMAL_POINT: {
+          [E.DECIMAL_POINT]: {
             target: `${S.operand1}.${S.after_decimal_point}`,
             actions: ['defaultReadout', 'defaultReadoutHistory'],
           },
-          CLEAR_ENTRY: {
+          [E.CLEAR_ENTRY]: {
             target: S.start,
             actions: ['defaultReadout', 'defaultReadoutHistory'],
           },
-          TOGGLE_SIGN: {
+          [E.TOGGLE_SIGN]: {
             target: S.operand1,
             actions: ['toggleSign', 'convertNumberToPositiveInHistory'],
           },
-          OPERATOR: {
+          [E.OPERATOR]: {
             target: S.operator_entered,
             actions: ['recordOperator'],
           },
-          PERCENTAGE: {
+          [E.PERCENTAGE]: {
             target: S.result,
             actions: ['storeResultAsOperand2', 'computePercentage', 'addPercentageToHistory'],
           },
@@ -243,13 +243,13 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
       },
       [S.operator_entered]: {
         on: {
-          OPERATOR: [
+          [E.OPERATOR]: [
             {
               target: S.operator_entered,
               actions: 'setOperator',
             },
           ],
-          NUMBER: [
+          [E.NUMBER]: [
             {
               cond: 'isZero',
               target: `${S.operand2}.${S.zero}`,
@@ -261,7 +261,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
               actions: ['setReadoutNum', 'saveOperand2', 'replaceLastNumberHistory'],
             },
           ],
-          DECIMAL_POINT: {
+          [E.DECIMAL_POINT]: {
             target: `${S.operand2}.${S.after_decimal_point}`,
             actions: ['defaultReadout', 'zeroSecondOperandAddToHistory'],
           },
@@ -269,7 +269,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
       },
       [S.operand2]: {
         on: {
-          OPERATOR: [
+          [E.OPERATOR]: [
             {
               cond: 'notDivideByZero',
               target: S.operator_entered,
@@ -284,12 +284,12 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
               target: S.alert,
             },
           ],
-          TOGGLE_SIGN: {
+          [E.TOGGLE_SIGN]: {
               cond: 'isNotDisplayZero',
               target: S.negative_number_2,
               actions: ['toggleSign', 'convertNumberToNegativeInHistory'],
           },
-          EQUALS: [
+          [E.EQUALS]: [
             {
               cond: 'notDivideByZero',
               target: S.result,
@@ -299,11 +299,11 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
               target: S.alert,
             },
           ],
-          PERCENTAGE: {
+          [E.PERCENTAGE]: {
             target: S.result,
             actions: ['storeResultAsOperand2', 'computePercentage', 'addPercentageToHistory'],
           },
-          CLEAR_ENTRY: {
+          [E.CLEAR_ENTRY]: {
             target: `${S.operand2}.${S.zero}`,
             actions: ['defaultReadout', 'removeLastNumberHistory'],
           },
@@ -312,7 +312,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
         states: {
           [S.zero]: {
             on: {
-              NUMBER: [
+              [E.NUMBER]: [
                 {
                   cond:'isZero',
                   target: S.zero,
@@ -322,21 +322,21 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
                 target: S.before_decimal_point,
                 actions: ['setReadoutNum', 'replaceLastNumberHistory'],
               }],
-              DECIMAL_POINT: S.after_decimal_point,
+              [E.DECIMAL_POINT]: S.after_decimal_point,
             },
           },
           [S.before_decimal_point]: {
             on: {
-              NUMBER: {
+              [E.NUMBER]: {
                 target: S.before_decimal_point,
                 actions: ['appendNumBeforeDecimal', 'addHistoryBeforeDecimalPoint'],
               },
-              DECIMAL_POINT: S.after_decimal_point,
+              [E.DECIMAL_POINT]: S.after_decimal_point,
             },
           },
           [S.after_decimal_point]: {
             on: {
-              NUMBER: {
+              [E.NUMBER]: {
                 target: S.after_decimal_point,
                 actions: ['appendNumAfterDecimal', 'addHistoryAfterDecimalPoint'],
               },
@@ -346,7 +346,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
       },
       [S.negative_number_2]: {
         on: {
-          OPERATOR: [
+          [E.OPERATOR]: [
             {
               cond: 'notDivideByZero',
               target: S.operator_entered,
@@ -361,7 +361,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
               target: S.alert,
             },
           ],
-          EQUALS: [
+          [E.EQUALS]: [
             {
               cond: 'notDivideByZero',
               target: S.result,
@@ -371,7 +371,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
               target: S.alert,
             },
           ], 
-          NUMBER: [
+          [E.NUMBER]: [
             {
               cond: 'isZero',
               target: `${S.operand2}.${S.zero}`,
@@ -383,19 +383,19 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
               actions: ['setReadoutNum', 'replaceLastNumberHistory'],
             },
           ],
-          TOGGLE_SIGN: {
+          [E.TOGGLE_SIGN]: {
             target: S.operand2,
             actions: ['toggleSign', 'convertNumberToPositiveInHistory'],
           },
-          DECIMAL_POINT: {
+          [E.DECIMAL_POINT]: {
             target: `${S.operand2}.${S.after_decimal_point}`,
             actions: ['defaultReadout', 'handleSecondOperandDecimalPoint'],
           },
-          CLEAR_ENTRY: {
+          [E.CLEAR_ENTRY]: {
             target: S.operator_entered,
             actions: ['defaultReadout', 'removeLastNumberHistory'],
           },
-          PERCENTAGE: {
+          [E.PERCENTAGE]: {
             target: S.result,
             actions: ['storeResultAsOperand2', 'computePercentage', 'addPercentageToHistory'],
           },
@@ -403,7 +403,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
       },
       [S.result]: {
         on: {
-          NUMBER: [
+          [E.NUMBER]: [
             {
               cond: 'isZero',
               target: S.operand1,
@@ -415,7 +415,7 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
               actions: ['setReadoutNum', 'replaceLastNumberHistory'],
             },
           ],
-          TOGGLE_SIGN: [
+          [E.TOGGLE_SIGN]: [
             {
               cond: 'isNegative',
               target: S.operand1,
@@ -427,19 +427,19 @@ const calMachine = Machine<Context, CalStateSchema, CalEvent>(
               actions: ['toggleSign', 'convertNumberToNegativeInHistory'],
             },
           ],
-          DECIMAL_POINT: {
+          [E.DECIMAL_POINT]: {
             target: `${S.operand1}.${S.after_decimal_point}`,
             actions: ['defaultReadout', 'defaultReadoutHistory']
           },
-          PERCENTAGE: {
+          [E.PERCENTAGE]: {
             target: S.result,
             actions: ['storeResultAsOperand2', 'computePercentage', 'addPercentageToHistory'],
           },
-          OPERATOR: {
+          [E.OPERATOR]: {
             target: S.operator_entered,
             actions: ['storeResultAsOperand1', 'recordOperator'],
           },
-          CLEAR_ENTRY: {
+          [E.CLEAR_ENTRY]: {
             target: S.start,
             actions: ['defaultReadout', 'defaultReadoutHistory'],
           },

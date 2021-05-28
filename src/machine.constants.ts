@@ -11,3 +11,14 @@ export enum S {
   result = "result",
   alert = "alert"
 }
+
+export enum E {
+    NUMBER = "NUMBER",
+    OPERATOR = "OPERATOR",
+    TOGGLE_SIGN = "TOGGLE_SIGN",
+    PERCENTAGE = "PERCENTAGE",
+    CLEAR_ENTRY = "CLEAR_ENTRY",
+    DECIMAL_POINT = "DECIMAL_POINT",
+    CLEAR_EVERYTHING = "CLEAR_EVERYTHING",
+    EQUALS = "EQUALS"
+}

@@ -3,6 +3,7 @@ import { useMachine } from '@xstate/react';
 import styled from 'styled-components';
 import machine, { isOperator } from './machine';
 import { CalEvent } from './machine.types';
+import { E } from './machine.constants';
 
 const Input = styled.textarea`
   font-size: 22px;
@@ -105,22 +106,22 @@ const Calculator = () => {
 
   const handleButtonClick = (item:string) => () => {
     if (Number.isInteger(+item)) {
-      send({ type: 'NUMBER', key: +item });
+      send({ type: E.NUMBER, key: +item });
     } else if (isOperator(item)) {
-      send({type: 'OPERATOR', operator: item });
+      send({type: E.OPERATOR, operator: item });
     } else if (item === 'C') {
-      send({ type:'CLEAR_EVERYTHING' });
+      send({ type: E.CLEAR_EVERYTHING });
     } else if (item === '.') {
-      send({ type:'DECIMAL_POINT' });
+      send({ type: E.DECIMAL_POINT });
     } else if (item === '%') {
-      send({ type:'PERCENTAGE' });
+      send({ type: E.PERCENTAGE });
     } else if (item === 'CE') {
-      send({ type:'CLEAR_ENTRY' });
+      send({ type: E.CLEAR_ENTRY });
     } else if( item === '+/-') {
-      send({ type:'TOGGLE_SIGN' });
+      send({ type: E.TOGGLE_SIGN});
     } 
     else {
-      send({ type:'EQUALS' });
+      send({ type: E.EQUALS });
     }
   };
 

@@ -1,4 +1,4 @@
-import {S} from './machine.constants';
+import { S, E } from "./machine.constants";
 export type Context = {
   display: string;
   operand1?: string;
@@ -32,10 +32,17 @@ export interface CalStateSchema {
   };
 }
 
-
-export type EventId = "NUMBER" | "OPERATOR" | "TOGGLE_SIGN" | "PERCENTAGE" | "CLEAR_ENTRY"| "DECIMAL_POINT"| "CLEAR_EVERYTHING"| "EQUALS";
-export interface CalEvent  {
+export type EventId =
+  | E.NUMBER
+  | E.OPERATOR
+  | E.TOGGLE_SIGN
+  | E.PERCENTAGE
+  | E.CLEAR_ENTRY
+  | E.DECIMAL_POINT
+  | E.CLEAR_EVERYTHING
+  | E.EQUALS;
+export interface CalEvent {
   type: EventId;
-  operator?: string,
-  key?: number
+  operator?: string;
+  key?: number;
 }
