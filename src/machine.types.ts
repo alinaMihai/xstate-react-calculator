@@ -1,3 +1,4 @@
+import {S} from './machine.constants';
 export type Context = {
   display: string;
   operand1?: string;
@@ -8,26 +9,26 @@ export type Context = {
 
 export interface CalStateSchema {
   states: {
-    start: {};
-    operand1: {
+    [S.start]: {};
+    [S.operand1]: {
       states: {
-        zero: {};
-        before_decimal_point: {};
-        after_decimal_point: {};
+        [S.zero]: {};
+        [S.before_decimal_point]: {};
+        [S.after_decimal_point]: {};
       };
     };
-    negative_number: {};
-    operator_entered: {};
-    operand2: {
+    [S.negative_number]: {};
+    [S.operator_entered]: {};
+    [S.operand2]: {
       states: {
-        zero: {};
-        before_decimal_point: {};
-        after_decimal_point: {};
+        [S.zero]: {};
+        [S.before_decimal_point]: {};
+        [S.after_decimal_point]: {};
       };
     };
-    negative_number_2: {};
-    result: {};
-    alert: {};
+    [S.negative_number_2]: {};
+    [S.result]: {};
+    [S.alert]: {};
   };
 }
 
