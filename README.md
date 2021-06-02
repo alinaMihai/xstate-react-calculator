@@ -2,6 +2,8 @@
 
 Based on https://github.com/GiancarlosIO/xstate-react-calculator, but with some new functionalities and bug fixes. 
 
+Article about this effort on [dev.to](https://dev.to/alinamihai/extending-the-functionality-of-react-calculator-xstate-example-67h)
+
 Extra Features:
 
 - add +/- button and handle operations with negative numbers (I used the Mac calculator as a reference for the behaviour)
